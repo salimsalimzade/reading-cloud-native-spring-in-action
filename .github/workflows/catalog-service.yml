@@ -1,0 +1,21 @@
+name: Catalog Service
+on:
+  push:
+    paths:
+      - 'catalog-service/**'
+      - '.github/workflows/ci-service.yml'
+      - '.github/workflows/catalog-service.yml'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    uses: ./.github/workflows/ci-service.yml
+    with:
+      service: catalog-service
+    permissions:
+      contents: read
+      actions: read
+      security-events: write
