@@ -1,0 +1,21 @@
+name: Config Service
+on:
+  push:
+    paths:
+      - 'config-service/**'
+      - '.github/workflows/ci-service.yml'
+      - '.github/workflows/config-service.yml'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  CI:
+    uses: ./.github/workflows/ci-service.yml
+    with:
+      service: config-service
+    permissions:
+      contents: read
+      actions: read
+      security-events: write
