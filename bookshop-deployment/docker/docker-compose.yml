@@ -1,10 +1,31 @@
 services:
+  bookshop-ui:
+    image: "ghcr.io/polarbookshop/polar-ui:v1"
+    container_name: bookshop-ui
+    ports:
+      - "9004:9004"
+    environment:
+      - PORT=9004
+  bookshop-keycloak:
+    image: quay.io/keycloak/keycloak:21.1.1
+    container_name: bookshop-keycloak
+    command: start-dev --import-realm
+    environment:
+      - KEYCLOAK_ADMIN=${KEYCLOAK_ADMIN}
+      - KEYCLOAK_ADMIN_PASSWORD=${KEYCLOAK_ADMIN_PASSWORD}
+    volumes:
+      - ./keycloak:/opt/keycloak/data/import
+    ports:
+      - "8080:8080"
   bookshop-rabbitmq:
     image: rabbitmq:3.10-management
     container_name: bookshop-rabbitmq
     ports:
       - "5672:5672"
       - "15672:15672"
+    environment:
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_USER}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASSWORD}
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
       - ./rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
@@ -12,15 +33,15 @@ services:
     image: postgres:16
     container_name: bookshop-postgres
     environment:
-      - POSTGRES_USER=user
-      - POSTGRES_PASSWORD=password
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     volumes:
       - ./postgresql/init.sql:/docker-entrypoint-initdb.d/init.sql
       - postgres_data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U user -d bookshop-catalog-db"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d bookshop-catalog-db"]
       interval: 3s
       timeout: 3s
       retries: 20
@@ -40,6 +61,8 @@ services:
       - BPL_DEBUG_PORT=8001
       - SPRING_PROFILES_ACTIVE=testdata
       - SPRING_DATASOURCE_URL=jdbc:postgresql://bookshop-postgres:5432/bookshop-catalog-db
+      - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER}
+      - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD}
       - SPRING_CLOUD_CONFIG_ENABLED=false
 
   order-service:
@@ -57,7 +80,11 @@ services:
       - BPL_DEBUG_PORT=8002
       - BOOKSHOP_CATALOG_SERVICE_URI=http://catalog-service:9001
       - SPRING_R2DBC_URL=r2dbc:postgresql://bookshop-postgres:5432/bookshop-order-db
+      - SPRING_R2DBC_USERNAME=${POSTGRES_USER}
+      - SPRING_R2DBC_PASSWORD=${POSTGRES_PASSWORD}
       - SPRING_FLYWAY_URL=jdbc:postgresql://bookshop-postgres:5432/bookshop-order-db
+      - SPRING_RABBITMQ_USERNAME=${RABBITMQ_USER}
+      - SPRING_RABBITMQ_PASSWORD=${RABBITMQ_PASSWORD}
 
   bookshop-redis:
     image: redis:latest

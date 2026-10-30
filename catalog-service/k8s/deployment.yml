@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: catalog-service
+  labels:
+    app: catalog-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: catalog-service
+  template:
+    metadata:
+      labels:
+        app: catalog-service
+    spec:
+      containers:
+        - name: catalog-service
+          image: catalog-service:latest
+          imagePullPolicy: IfNotPresent
+          lifecycle:
+            preStop:
+              exec:
+                command: ["/bin/sh", "-c", "sleep 30"]
+          ports:
+            - containerPort: 9001
+            - containerPort: 8001
+          env:
+            - name: BPL_JVM_THREAD_COUNT
+              value: "50"
+            - name: BPL_DEBUG_ENABLED
+              value: "true"
+            - name: BPL_DEBUG_PORT
+              value: "8001"
+            - name: SPRING_PROFILES_ACTIVE
+              value: "testdata"
+            - name: SPRING_DATASOURCE_URL
+              value: "jdbc:postgresql://bookshop-postgres:5432/bookshop-catalog-db"
+            - name: SPRING_CLOUD_CONFIG_ENABLED
+              value: "false"
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: 9001
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: 9001
+            initialDelaySeconds: 5
+            periodSeconds: 15

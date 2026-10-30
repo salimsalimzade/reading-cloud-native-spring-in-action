@@ -1,0 +1,27 @@
+services:
+  catalog-service:
+    depends_on:
+    - catalog-postgres
+
+    image: catalog-service:latest
+    container_name: catalog-service
+    ports:
+      - "9001:9001"
+      - "8001:8001"
+    environment:
+      - BPL_JVM_THREAD_COUNT=50
+      - BPL_DEBUG_ENABLED=true
+      - BPL_DEBUG_PORT=8001
+      - SPRING_PROFILES_ACTIVE=testdata
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://catalog-postgres:5432/bookshop-catalog-db
+      - SPRING_CLOUD_CONFIG_ENABLED=false
+  catalog-postgres:
+    image: postgres:16
+    container_name: catalog-postgres
+    environment:
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+    volumes:
+      - ../bookshop-deployment/docker/postgresql/init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"

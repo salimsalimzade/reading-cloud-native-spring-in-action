@@ -1,0 +1,48 @@
+server:
+  port: 9002
+  shutdown: graceful
+  netty:
+    connect-timeout: 2s
+    idle-timeout: 15s
+
+spring:
+  r2dbc:
+    url: r2dbc:postgresql://localhost:5432/bookshop-order-db
+    username: user
+    password: password
+    pool:
+      max-create-connection-time: 2s
+      initial-size: 5
+      max-size: 10
+  flyway:
+    user: ${spring.r2dbc.username}
+    password: ${spring.r2dbc.password}
+    url: jdbc:postgresql://localhost:5432/bookshop-order-db
+  application:
+    name: order-service
+  lifecycle:
+    timeout-per-shutdown-phase: 15s
+  cloud:
+    function:
+      definition: dispatchOrder
+    stream:
+      bindings:
+        dispatchOrder-in-0:
+          destination: order-dispatched
+          group: ${spring.application.name}
+        acceptOrder-out-0:
+          destination: order-accepted
+      rabbit:
+        bindings:
+          acceptOrder-out-0:
+            producer:
+              transacted: true
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: user
+    password: password
+    connection-timeout: 5s
+
+bookshop:
+  catalog-service-uri: "http://localhost:9001"
