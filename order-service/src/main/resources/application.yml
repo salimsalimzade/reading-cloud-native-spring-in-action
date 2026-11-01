@@ -43,6 +43,11 @@ spring:
     username: user
     password: password
     connection-timeout: 5s
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8080/realms/Bookshop
 
 bookshop:
   catalog-service-uri: "http://localhost:9001"

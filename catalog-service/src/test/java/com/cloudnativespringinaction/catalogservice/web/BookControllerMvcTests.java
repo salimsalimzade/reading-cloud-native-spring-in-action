@@ -1,11 +1,14 @@
 package com.cloudnativespringinaction.catalogservice.web;
 
+import com.cloudnativespringinaction.catalogservice.config.SecurityConfig;
 import com.cloudnativespringinaction.catalogservice.domain.BookNotFoundException;
 import com.cloudnativespringinaction.catalogservice.domain.BookService;
 import org.junit.jupiter.api.Test;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Import;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -14,6 +17,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(BookController.class)
+@Import(SecurityConfig.class)
 class BookControllerMvcTests {
 
     @Autowired
@@ -21,6 +25,9 @@ class BookControllerMvcTests {
 
     @MockitoBean
     private BookService bookService;
+
+    @MockitoBean
+    private JwtDecoder jwtDecoder;
 
     @Test
     void whenGetBookNotExistingThenShouldReturn404() throws Exception {

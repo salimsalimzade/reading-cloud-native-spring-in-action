@@ -37,10 +37,16 @@ public record Book (
         @LastModifiedDate
         Instant lastModifiedDate,
 
+        @CreatedBy
+        String createdBy,
+
+        @LastModifiedBy
+        String lastModifiedBy,
+
         @Version
         Integer version
 ){
         public static Book of(String isbn, String title, String author, Double price, String publisher) {
-                return new Book(null, isbn, title, author, price, publisher, null, null, null);
+                return new Book(null, isbn, title, author, price, publisher, null, null, null, null, null);
         }
 }

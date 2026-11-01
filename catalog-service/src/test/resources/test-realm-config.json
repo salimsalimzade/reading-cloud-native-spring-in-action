@@ -1,0 +1,76 @@
+{
+  "realm": "Bookshop",
+  "enabled": true,
+  "roles": {
+    "realm": [
+      {
+        "name": "employee"
+      },
+      {
+        "name": "customer"
+      }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "bookshop-test",
+      "enabled": true,
+      "publicClient": true,
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "protocolMappers": [
+        {
+          "name": "realm roles",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-realm-role-mapper",
+          "config": {
+            "claim.name": "roles",
+            "multivalued": "true",
+            "access.token.claim": "true",
+            "id.token.claim": "true",
+            "jsonType.label": "String"
+          }
+        }
+      ]
+    }
+  ],
+  "users": [
+    {
+      "username": "ryandahl",
+      "firstName": "Ryan",
+      "lastName": "Dahl",
+      "email": "ryandahl@example.com",
+      "emailVerified": true,
+      "enabled": true,
+      "realmRoles": [
+        "employee",
+        "customer"
+      ],
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password",
+          "temporary": false
+        }
+      ]
+    },
+    {
+      "username": "jackdorsey",
+      "firstName": "Jack",
+      "lastName": "Dorsey",
+      "email": "jackdorsey@example.com",
+      "emailVerified": true,
+      "enabled": true,
+      "realmRoles": [
+        "customer"
+      ],
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password",
+          "temporary": false
+        }
+      ]
+    }
+  ]
+}
