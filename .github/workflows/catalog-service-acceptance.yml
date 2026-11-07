@@ -1,0 +1,38 @@
+name: Catalog Service - Acceptance Stage
+on:
+  # Listing 15.2: runs after the commit stage finishes on main.
+  # In this monorepo every service has its own commit stage, so we listen to
+  # "Catalog Service - Commit Stage" instead of the book's plain "Commit Stage".
+  workflow_run:
+    workflows: ['Catalog Service - Commit Stage']
+    types: [completed]
+    branches: main
+
+# Listing 15.3: only one acceptance run at a time; queued release candidates are
+# replaced by the newest one. The group is per service because concurrency groups
+# are repo-wide (a shared "acceptance" group would let services drop each other's runs).
+concurrency: catalog-service-acceptance
+
+# Listing 15.4: placeholder functional and non-functional acceptance tests.
+# They'd run against a staging environment (see the staging overlay from ch14).
+jobs:
+  functional:
+    name: Functional Acceptance Tests
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-24.04
+    steps:
+      - run: echo "Running functional acceptance tests"
+
+  performance:
+    name: Performance Tests
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-24.04
+    steps:
+      - run: echo "Running performance tests"
+
+  security:
+    name: Security Tests
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-24.04
+    steps:
+      - run: echo "Running security tests"

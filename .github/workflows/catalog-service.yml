@@ -11,7 +11,10 @@ concurrency:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: bookshop/catalog-service
+  # GHCR only lets GITHUB_TOKEN push to the repo owner's namespace
+  # (ghcr.io/bookshop/... failed with permission_denied), so the book's
+  # "polarbookshop" maps to our GitHub account here.
+  IMAGE_NAME: ${{ github.repository_owner }}/catalog-service
   VERSION: ${{ github.sha }}
 
 # Monorepo: every `run` step executes inside the service folder.
