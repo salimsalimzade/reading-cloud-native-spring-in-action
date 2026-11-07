@@ -1,12 +1,16 @@
+info:
+  system: Polar Bookshop
+
 spring:
   application:
     name: catalog-service
   lifecycle:
     timeout-per-shutdown-phase: 30s
   config:
-    import: "optional:configserver:"
+    import: ""
   cloud:
     config:
+      enabled: false
       uri: http://localhost:8888
       request-connect-timeout: 5000
       request-read-timeout: 5000
@@ -39,13 +43,22 @@ server:
 management:
   endpoints:
     web:
-        exposure:
-            include: health, refresh
+      exposure:
+        include: flyway, health, info, prometheus
   endpoint:
     health:
+      show-details: always
+      show-components: always
       probes:
         enabled: true
+  info:
+    env:
+      enabled: true
 
-polar:
+bookshop:
   greeting: Welcome to the local book catalog!
   saluting: Hmm nice work
+
+logging:
+  pattern:
+    level: "%5p [${spring.application.name},%X{trace_id},%X{span_id}]"

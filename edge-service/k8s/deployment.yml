@@ -13,10 +13,14 @@ spec:
     metadata:
       labels:
         app: edge-service
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/path: /actuator/prometheus
+        prometheus.io/port: "9000"
     spec:
       containers:
         - name: edge-service
-          image: edge-service:0.0.1-SNAPSHOT
+          image: edge-service:latest
           imagePullPolicy: IfNotPresent
           lifecycle:
             preStop:
@@ -34,12 +38,14 @@ spec:
             - name: SPA_URL
               value: "http://bookshop-ui"
           livenessProbe:
-            tcpSocket:
+            httpGet:
+              path: /actuator/health/liveness
               port: 9000
             initialDelaySeconds: 20
             periodSeconds: 10
           readinessProbe:
-            tcpSocket:
+            httpGet:
+              path: /actuator/health/readiness
               port: 9000
             initialDelaySeconds: 10
             periodSeconds: 10

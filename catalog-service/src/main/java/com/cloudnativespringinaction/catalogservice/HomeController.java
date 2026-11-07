@@ -7,15 +7,15 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class HomeController {
 
-    private final Properties polarProperties;
+    private final Properties bookshopProperties;
 
-    public HomeController(Properties polarProperties) {
-        this.polarProperties = polarProperties;
+    public HomeController(Properties bookshopProperties) {
+        this.bookshopProperties = bookshopProperties;
     }
 
     @GetMapping("/")
     public String getGreeting() {
-        return polarProperties.getGreeting();
+        return bookshopProperties.getGreeting();
     }
 
     ;

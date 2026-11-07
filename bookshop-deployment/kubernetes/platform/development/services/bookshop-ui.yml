@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bookshop-ui
+  labels:
+    app: bookshop-ui
+spec:
+  selector:
+    matchLabels:
+      app: bookshop-ui
+  template:
+    metadata:
+      labels:
+        app: bookshop-ui
+    spec:
+      containers:
+        - name: bookshop-ui
+          image: ghcr.io/polarbookshop/polar-ui:v1
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 9004
+          env:
+            - name: PORT
+              value: "9004"
+          resources:
+            requests:
+              cpu: 100m
+              memory: 50Mi
+            limits:
+              cpu: 200m
+              memory: 100Mi
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: bookshop-ui
+  labels:
+    app: bookshop-ui
+spec:
+  type: ClusterIP
+  selector:
+    app: bookshop-ui
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 9004

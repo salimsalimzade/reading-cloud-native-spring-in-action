@@ -41,15 +41,22 @@ services:
     ports:
       - "5432:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d bookshop-catalog-db"]
+      test:
+        ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d bookshop-catalog-db"]
       interval: 3s
       timeout: 3s
       retries: 20
 
   catalog-service:
     depends_on:
+      fluent-bit:
+        condition: service_started
+      bookshop-keycloak:
+        condition: service_started
       bookshop-postgres:
         condition: service_healthy
+      tempo:
+        condition: service_started
     image: catalog-service:latest
     container_name: catalog-service
     ports:
@@ -64,9 +71,56 @@ services:
       - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER}
       - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD}
       - SPRING_CLOUD_CONFIG_ENABLED=false
+      - SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI=http://host.docker.internal:8080/realms/Bookshop
+      - JAVA_TOOL_OPTIONS=-javaagent:/workspace/BOOT-INF/lib/opentelemetry-javaagent-2.33.1.jar
+      - OTEL_SERVICE_NAME=catalog-service
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://tempo:4317
+      - OTEL_EXPORTER_OTLP_PROTOCOL=grpc
+      - OTEL_METRICS_EXPORTER=none
+      - OTEL_LOGS_EXPORTER=none
+    logging:
+      driver: fluentd
+      options:
+        fluentd-address: 127.0.0.1:24224
+
+  edge-service:
+    depends_on:
+      fluent-bit:
+        condition: service_started
+      bookshop-keycloak:
+        condition: service_started
+      bookshop-redis:
+        condition: service_started
+      tempo:
+        condition: service_started
+    image: edge-service:latest
+    container_name: edge-service
+    ports:
+      - "9000:9000"
+      - "8000:8000"
+    environment:
+      - BPL_DEBUG_ENABLED=true
+      - BPL_DEBUG_PORT=8000
+      - CATALOG_SERVICE_URL=http://catalog-service:9001
+      - ORDER_SERVICE_URL=http://order-service:9002
+      - SPA_URL=http://bookshop-ui:9004
+      - REDIS_HOST=bookshop-redis
+      - KEYCLOAK_ISSUER_URI=http://host.docker.internal:8080/realms/Bookshop
+      - JAVA_TOOL_OPTIONS=-javaagent:/workspace/BOOT-INF/lib/opentelemetry-javaagent-2.33.1.jar
+      - OTEL_SERVICE_NAME=edge-service
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://tempo:4317
+      - OTEL_EXPORTER_OTLP_PROTOCOL=grpc
+      - OTEL_METRICS_EXPORTER=none
+      - OTEL_LOGS_EXPORTER=none
+    logging:
+      driver: fluentd
+      options:
+        fluentd-address: 127.0.0.1:24224
 
   order-service:
     depends_on:
+      fluent-bit:
+        condition: service_started
       bookshop-postgres:
         condition: service_healthy
     image: order-service:latest
@@ -85,6 +139,10 @@ services:
       - SPRING_FLYWAY_URL=jdbc:postgresql://bookshop-postgres:5432/bookshop-order-db
       - SPRING_RABBITMQ_USERNAME=${RABBITMQ_USER}
       - SPRING_RABBITMQ_PASSWORD=${RABBITMQ_PASSWORD}
+    logging:
+      driver: fluentd
+      options:
+        fluentd-address: 127.0.0.1:24224
 
   bookshop-redis:
     image: redis:latest
@@ -93,6 +151,59 @@ services:
       - "6379:6379"
     volumes:
       - redis_data:/data
+
+  grafana:
+    image: grafana/grafana:9.1.2
+    container_name: grafana
+    depends_on:
+      - loki
+      - prometheus
+      - tempo
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=user
+      - GF_SECURITY_ADMIN_PASSWORD=password
+    volumes:
+      - ./observability/grafana/datasources/datasource.yml:/etc/grafana/provisioning/datasources/datasource.yml
+      - ./observability/grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - ./observability/grafana/grafana.ini:/etc/grafana/grafana.ini
+
+  loki:
+    image: grafana/loki:2.6.1
+    container_name: loki
+    depends_on:
+      - fluent-bit
+    ports:
+      - "3100:3100"
+
+  fluent-bit:
+    image: grafana/fluent-bit-plugin-loki:2.6.1-amd64
+    platform: linux/amd64
+    container_name: fluent-bit
+    ports:
+      - "24224:24224"
+    environment:
+      - LOKI_URL=http://loki:3100/loki/api/v1/push
+    volumes:
+      - ./observability/fluent-bit/fluent-bit.conf:/fluent-bit/etc/fluent-bit.conf
+
+  prometheus:
+    image: prom/prometheus:v2.38.0
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+
+  tempo:
+    image: grafana/tempo:1.5.0
+    container_name: tempo
+    command: -config.file /etc/tempo-config.yml
+    ports:
+      - "4317:4317"
+    volumes:
+      - ./observability/tempo/tempo.yml:/etc/tempo-config.yml
 
 volumes:
   postgres_data:

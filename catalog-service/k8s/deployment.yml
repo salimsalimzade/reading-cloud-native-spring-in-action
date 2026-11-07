@@ -13,6 +13,10 @@ spec:
     metadata:
       labels:
         app: catalog-service
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/path: /actuator/prometheus
+        prometheus.io/port: "9001"
     spec:
       containers:
         - name: catalog-service
@@ -34,8 +38,6 @@ spec:
               value: "8001"
             - name: SPRING_PROFILES_ACTIVE
               value: "testdata"
-            - name: SPRING_DATASOURCE_URL
-              value: "jdbc:postgresql://bookshop-postgres:5432/bookshop-catalog-db"
             - name: SPRING_CLOUD_CONFIG_ENABLED
               value: "false"
           livenessProbe:
@@ -50,3 +52,10 @@ spec:
               port: 9001
             initialDelaySeconds: 5
             periodSeconds: 15
+          volumeMounts:
+            - name: catalog-config-volume
+              mountPath: /workspace/config
+      volumes:
+        - name: catalog-config-volume
+          configMap:
+            name: catalog-config

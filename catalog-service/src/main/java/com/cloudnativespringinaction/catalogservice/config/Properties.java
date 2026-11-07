@@ -3,7 +3,7 @@ package com.cloudnativespringinaction.catalogservice.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
-@ConfigurationProperties(prefix = "polar")
+@ConfigurationProperties(prefix = "bookshop")
 public class Properties {
     /**
      * A message to welcome users.

@@ -26,6 +26,7 @@ repositories {
 
 ext {
     set('springCloudVersion', "2025.1.3")
+    set('otelVersion', "2.33.1")
 }
 
 dependencies {
@@ -41,6 +42,8 @@ dependencies {
     implementation 'org.springframework.cloud:spring-cloud-starter-config'
     implementation 'org.springframework.retry:spring-retry'
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    runtimeOnly 'io.micrometer:micrometer-registry-prometheus'
+    runtimeOnly "io.opentelemetry.javaagent:opentelemetry-javaagent:${otelVersion}"
     implementation 'org.springframework.boot:spring-boot-starter-data-jdbc'
     runtimeOnly 'org.postgresql:postgresql'
     testImplementation 'org.springframework.boot:spring-boot-starter-data-jdbc-test'
@@ -73,4 +76,8 @@ bootBuildImage {
     environment = [
             'BP_JVM_VERSION': '25.*'
     ]
+}
+
+springBoot {
+    buildInfo()
 }

@@ -1,0 +1,32 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  # Remote base: the Catalog Service manifests (catalog-service/k8s) on the main branch.
+  # Monorepo, so the path goes through the repo name and then the service folder.
+  - github.com/salimsalimzade/reading-cloud-native-spring-in-action/catalog-service/k8s?ref=main
+
+# Book uses `patchesStrategicMerge`, which is deprecated in Kustomize v5.
+# `patches` with a `path` is the replacement and still does a strategic merge.
+patches:
+  - path: patch-env.yml
+
+# Adds application-staging.yml to the base's catalog-config ConfigMap
+# (same name + behavior: merge), next to the base application.yml.
+configMapGenerator:
+  - behavior: merge
+    files:
+      - application-staging.yml
+    name: catalog-config
+
+# Replaces the base's local `catalog-service:latest` image with the one
+# published to GHCR by the Commit Stage workflow.
+images:
+  - name: catalog-service
+    newName: ghcr.io/salimsalimzade/catalog-service
+    newTag: latest
+
+# At least two instances in staging, for availability.
+replicas:
+  - name: catalog-service
+    count: 2

@@ -1,4 +1,6 @@
 {
   "java.compile.nullAnalysis.mode": "automatic",
-  "java.configuration.updateBuildConfiguration": "interactive"
+  "java.configuration.updateBuildConfiguration": "interactive",
+  "editor.fontFamily": "jetbrains mono",
+  "terminal.integrated.fontFamily": "monospace"
 }
