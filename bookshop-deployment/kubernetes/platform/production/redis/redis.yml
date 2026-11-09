@@ -1,0 +1,65 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: bookshop-redis
+  labels:
+    app: bookshop-redis
+spec:
+  type: ClusterIP
+  selector:
+    app: bookshop-redis
+  ports:
+    - port: 6379
+      targetPort: 6379
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: bookshop-redis
+spec:
+  serviceName: bookshop-redis
+  replicas: 1
+  selector:
+    matchLabels:
+      app: bookshop-redis
+  template:
+    metadata:
+      labels:
+        app: bookshop-redis
+    spec:
+      containers:
+        - name: redis
+          image: redis:7
+          args: ["--requirepass", "$(REDIS_PASSWORD)", "--appendonly", "yes"]
+          env:
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: bookshop-redis-admin
+                  key: password
+          ports:
+            - containerPort: 6379
+          readinessProbe:
+            exec:
+              command:
+                ["sh", "-c", 'redis-cli -a "$REDIS_PASSWORD" ping | grep PONG']
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              memory: 256Mi
+          volumeMounts:
+            - name: data
+              mountPath: /data
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        storageClassName: local-path
+        resources:
+          requests:
+            storage: 1Gi

@@ -1,0 +1,23 @@
+apiVersion: rabbitmq.com/v1beta1
+kind: RabbitmqCluster
+metadata:
+  name: bookshop-rabbitmq
+  namespace: rabbitmq-system
+spec:
+  replicas: 1
+  # Book uses 275Mi/350Mi (sized for RabbitMQ 3.x). The current Operator runs a
+  # newer RabbitMQ, so give it more room; no CPU limit to avoid throttling.
+  resources:
+    requests:
+      cpu: 100m
+      memory: 512Mi
+    limits:
+      memory: 1Gi
+  persistence:
+    storage: 1Gi
+  rabbitmq:
+    additionalConfig: |
+      disk_free_limit.absolute = 500MB
+      vm_memory_high_watermark_paging_ratio = 0.99
+      vm_memory_high_watermark.relative = 0.90
+  terminationGracePeriodSeconds: 60

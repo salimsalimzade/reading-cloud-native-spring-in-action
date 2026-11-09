@@ -1,0 +1,68 @@
+fullnameOverride: bookshop-keycloak
+commonAnnotations:
+  app: bookshop-keycloak
+# Bitnami moved its free versioned images to docker.io/bitnamilegacy in 2025,
+# so docker.io/bitnami/keycloak:24.0.5 no longer exists.
+global:
+  security:
+    allowInsecureImages: true       # newer charts refuse non-default images without this
+image:
+  registry: docker.io
+  repository: bitnamilegacy/keycloak
+  tag: 24.0.5
+postgresql:
+  image:
+    registry: docker.io
+    repository: bitnamilegacy/postgresql
+  # Ubuntu AppArmor on the k3s server blocks signals between PostgreSQL's own
+  # processes ("FATAL: could not signal for checkpoint: Permission denied"),
+  # so the bundled PostgreSQL never finishes starting. Same fix as
+  # ../postgresql/postgresql.yml. Merged with the chart's default security context.
+  primary:
+    containerSecurityContext:
+      appArmorProfile:
+        type: Unconfined
+keycloakConfigCli:                  # disabled by default; set in case it's ever enabled
+  image:
+    registry: docker.io
+    repository: bitnamilegacy/keycloak-config-cli
+extraEnvVars:
+  - name: KEYCLOAK_EXTRA_ARGS
+    value: "--import-realm"
+  - name: KC_HTTP_ENABLED
+    value: "true"
+  - name: KC_HOSTNAME_STRICT_HTTPS
+    value: "false"
+  - name: KC_HOSTNAME_STRICT
+    value: "false"
+  # On this k3s server the HotSpot JVM sizes its heap from the laptop's 16 GB
+  # (MaxHeapSize ~3.5 GB even with a 1.5 GiB limit), and kc.sh asks for 70% of
+  # "RAM" as heap (50% upfront), so Keycloak is OOMKilled within seconds of
+  # starting. A fixed heap that fits inside the container limit avoids that.
+  - name: JAVA_OPTS_KC_HEAP
+    value: "-XX:MinHeapFreeRatio=10 -XX:MaxHeapFreeRatio=20 -Xms256m -Xmx768m"
+extraVolumeMounts:
+  - name: config-volume
+    mountPath: "/opt/bitnami/keycloak/data/import"
+    readOnly: true
+extraVolumes:
+  - name: config-volume
+    configMap:
+      name: keycloak-config
+startupProbe:
+  enabled: true
+# Book: 756Mi. Keycloak was OOMKilled at that limit while building its config
+# on startup ("Updating the configuration..."), so give it 1.5Gi.
+resources:
+  requests:
+    cpu: 0.2
+    memory: 1Gi
+  limits:
+    cpu: 2
+    memory: 1536Mi
+# Port 80 is taken by ingress-nginx on the node, so Keycloak is exposed on
+# http://<node-ip>:8080 (issuer: http://<node-ip>:8080/realms/Bookshop).
+service:
+  type: LoadBalancer
+  ports:
+    http: 8080

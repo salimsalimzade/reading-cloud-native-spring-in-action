@@ -1,0 +1,16 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: catalog-service
+spec:
+  template:
+    spec:
+      containers:
+        - name: catalog-service
+          env:
+            # Threads the Paketo Java Memory Calculator reserves stack memory
+            # for (base uses 50 for local/staging; default would be 250).
+            - name: BPL_JVM_THREAD_COUNT
+              value: "100"
+            - name: SPRING_PROFILES_ACTIVE
+              value: prod

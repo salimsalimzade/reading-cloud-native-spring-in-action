@@ -1,0 +1,17 @@
+# Ubuntu's AppArmor (stacked "cri-containerd.apparmor.d//&unconfined" profile)
+# blocks signals between processes in the container, so `nginx -s reload` fails
+# with "kill(24, 1) failed (13: Permission denied)" and the controller never gets
+# Ready. Running the controller container unconfined lets NGINX reload again.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ingress-nginx-controller
+  namespace: ingress-nginx
+spec:
+  template:
+    spec:
+      containers:
+        - name: controller
+          securityContext:
+            appArmorProfile:
+              type: Unconfined
