@@ -6,7 +6,7 @@ kind: Kustomization
   # release commit (and sets the image tag) on the next Edge Service release.
   # Blocks /actuator from outside the cluster (replaces the book's patch-ingress.yml).
 resources:
-- github.com/salimsalimzade/reading-cloud-native-spring-in-action/edge-service/k8s?ref=8ef0d7dcfc76e2865d0edca25fcc32b7c6add869
+- github.com/salimsalimzade/reading-cloud-native-spring-in-action/edge-service/k8s?ref=c92c4d37e2e44b7f08d7c1bd4d8da1101351a543
 - ingress-actuator.yml
 
 # Book uses `patchesStrategicMerge`, which is deprecated in Kustomize v5.
@@ -26,7 +26,7 @@ configMapGenerator:
 images:
 - name: edge-service
   newName: ghcr.io/salimsalimzade/edge-service
-  newTag: 8ef0d7dcfc76e2865d0edca25fcc32b7c6add869
+  newTag: c92c4d37e2e44b7f08d7c1bd4d8da1101351a543
 
 replicas:
 - count: 1
