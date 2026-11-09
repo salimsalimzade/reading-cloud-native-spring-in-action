@@ -63,7 +63,14 @@ jobs:
           chmod +x gradlew
           ./gradlew build
 
-      # TODO: add a "Validate Kubernetes manifests" step once k8s/ exists.
+      # Book (Listing 14.9) uses kubeval via stefanprodan/kube-tools. kubeval is
+      # unmaintained and its default schema host is offline, so we use kubeconform,
+      # its drop-in successor, with the same "kustomize build | validate --strict" idea.
+      - name: Validate Kubernetes manifests
+        run: |
+          curl -sSL https://github.com/yannh/kubeconform/releases/download/v0.7.0/kubeconform-linux-amd64.tar.gz \
+            | tar xz -C "$RUNNER_TEMP" kubeconform
+          kubectl kustomize k8s | "$RUNNER_TEMP/kubeconform" -strict -summary -
 
   package:
     name: Package and Publish

@@ -1,0 +1,15 @@
+# In-cluster defaults for Order Service (same pattern as catalog-service/k8s).
+bookshop:
+  catalog-service-uri: http://catalog-service
+spring:
+  r2dbc:
+    url: r2dbc:postgresql://bookshop-postgres:5432/bookshop-order-db
+  flyway:
+    url: jdbc:postgresql://bookshop-postgres:5432/bookshop-order-db
+  rabbitmq:
+    host: bookshop-rabbitmq
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://bookshop-keycloak/realms/Bookshop

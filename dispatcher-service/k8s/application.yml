@@ -1,0 +1,4 @@
+# In-cluster defaults for Dispatcher Service (same pattern as catalog-service/k8s).
+spring:
+  rabbitmq:
+    host: bookshop-rabbitmq

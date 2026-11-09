@@ -1,0 +1,17 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dispatcher-service
+spec:
+  template:
+    spec:
+      containers:
+        - name: dispatcher-service
+          volumeMounts:
+            - name: rabbitmq-credentials-volume
+              mountPath: /workspace/secrets/rabbitmq
+      # Merged with the base's ConfigMap volume (dispatcher-config).
+      volumes:
+        - name: rabbitmq-credentials-volume
+          secret:
+            secretName: bookshop-rabbitmq-credentials

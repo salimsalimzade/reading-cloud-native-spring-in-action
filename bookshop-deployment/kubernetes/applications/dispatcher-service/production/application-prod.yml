@@ -1,0 +1,5 @@
+spring:
+  config:
+    # Loads every Secret mounted under /workspace/secrets/<name>/ as a config
+    # tree (file name = property, content = value). Keep the final slash.
+    import: configtree:/workspace/secrets/*/
