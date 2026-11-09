@@ -1,0 +1,59 @@
+name: Production Stage
+on:
+  # Listing 15.18: runs when an acceptance stage hands over a release candidate
+  # (an "app_delivery" event, dispatched by the deliver job). One workflow for
+  # every service: the payload says which app, image and version.
+  repository_dispatch:
+    types: [app_delivery]
+
+# Production-stage runs all commit to main; run them one at a time per app.
+concurrency: production-${{ github.event.client_payload.app_name }}
+
+jobs:
+  update:
+    name: Update application version
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write   # push the updated overlay
+    env:
+      APP_IMAGE: ${{ github.event.client_payload.app_image }}
+      APP_NAME: ${{ github.event.client_payload.app_name }}
+      APP_VERSION: ${{ github.event.client_payload.app_version }}
+      # Deployment config lives in this monorepo, under bookshop-deployment/.
+      OVERLAY_DIR: bookshop-deployment/kubernetes/applications/${{ github.event.client_payload.app_name }}/production
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v7
+
+      - name: Install kustomize
+        run: |
+          curl -sSL https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv5.8.3/kustomize_v5.8.3_linux_amd64.tar.gz \
+            | tar xz -C "$RUNNER_TEMP" kustomize
+          echo "$RUNNER_TEMP" >> "$GITHUB_PATH"
+
+      - name: Update image version
+        working-directory: ${{ env.OVERLAY_DIR }}
+        run: |
+          kustomize edit set image "$APP_NAME=$APP_IMAGE:$APP_VERSION"
+          # Pin the remote base (?ref=<sha>) to the same release commit.
+          # The book's `s/ref=[\w+]/.../` replaces only one character and drops
+          # "ref=", so match the whole hex SHA instead.
+          sed -i -E "s/(\?ref=)[0-9a-f]+/\1$APP_VERSION/" kustomization.yml
+          git diff --stat
+
+      # Book uses stefanzweifel/git-auto-commit-action; plain git avoids handing
+      # the token to a third-party action. A push made with GITHUB_TOKEN doesn't
+      # trigger other workflows, so this can't start a pipeline loop.
+      - name: Commit updated manifests
+        run: |
+          if git diff --quiet; then
+            echo "Overlay already at $APP_VERSION, nothing to commit."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "$OVERLAY_DIR/kustomization.yml"
+          git commit -m "Update $APP_NAME to version $APP_VERSION"
+          # main may have moved since checkout (e.g. another service's release).
+          git pull --rebase origin main
+          git push origin HEAD:main

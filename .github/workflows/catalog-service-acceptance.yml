@@ -13,6 +13,14 @@ on:
 # are repo-wide (a shared "acceptance" group would let services drop each other's runs).
 concurrency: catalog-service-acceptance
 
+# Listing 15.17: data sent to the production stage.
+env:
+  REGISTRY: ghcr.io
+  APP_NAME: catalog-service
+  # The commit the Commit Stage built and tagged the image with. In a
+  # workflow_run run, github.sha is the tip of main, not necessarily that commit.
+  VERSION: ${{ github.event.workflow_run.head_sha }}
+
 # Listing 15.4: placeholder functional and non-functional acceptance tests.
 # They'd run against a staging environment (see the staging overlay from ch14).
 jobs:
@@ -36,3 +44,28 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - run: echo "Running security tests"
+
+  # Listing 15.17: once every acceptance test passed, hand the release candidate
+  # to the production stage. The book dispatches to a separate polar-deployment
+  # repo with a personal access token; here the deployment config lives in this
+  # same repo, so the job dispatches to its own repo with the built-in
+  # GITHUB_TOKEN (repository_dispatch is one of the events GITHUB_TOKEN may
+  # trigger), so no PAT / DISPATCH_TOKEN secret and no third-party action.
+  deliver:
+    name: Deliver release candidate to production
+    needs: [ functional, performance, security ]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write   # required by the repository dispatch API
+    steps:
+      - name: Deliver application to production
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          jq -n \
+            --arg image "$REGISTRY/${{ github.repository_owner }}/$APP_NAME" \
+            --arg name "$APP_NAME" \
+            --arg version "$VERSION" \
+            '{event_type: "app_delivery",
+              client_payload: {app_image: $image, app_name: $name, app_version: $version}}' \
+          | gh api "repos/${{ github.repository }}/dispatches" --input -
