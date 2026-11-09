@@ -39,6 +39,11 @@ dependencyManagement {
     }
 }
 
+// Security overrides for versions Spring Boot 4.1.2 still manages too low
+// (GitHub code scanning / Grype): amqp-client <5.36.1 has several advisories
+// (GHSA-68mj-5wr7-6fgg, GHSA-93j5-89vc-pph4, GHSA-cqgh-8p3p-mx4m, ...).
+ext['rabbit-amqp-client.version'] = '5.37.1'
+
 tasks.named('test') {
     useJUnitPlatform()
 }

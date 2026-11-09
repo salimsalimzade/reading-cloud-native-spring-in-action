@@ -1,6 +1,6 @@
 plugins {
     id 'java'
-    id 'org.springframework.boot' version '4.1.1'
+    id 'org.springframework.boot' version '4.1.2'
     id 'io.spring.dependency-management' version '1.1.7'
 }
 
@@ -55,6 +55,19 @@ dependencies {
 dependencyManagement {
     imports {
         mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
+    }
+}
+
+// Security overrides for versions Spring Boot 4.1.2 still manages too low
+// (GitHub code scanning / Grype): amqp-client <5.36.1 has several advisories
+// (GHSA-68mj-5wr7-6fgg, GHSA-93j5-89vc-pph4, GHSA-cqgh-8p3p-mx4m, ...).
+ext['rabbit-amqp-client.version'] = '5.37.1'
+
+// scram 3.2 (pulled by r2dbc-postgresql/pgjdbc) is affected by GHSA-p9jg-fcr6-3mhf; fixed in 3.3.
+dependencyManagement {
+    dependencies {
+        dependency 'com.ongres.scram:scram-client:3.4'
+        dependency 'com.ongres.scram:scram-common:3.4'
     }
 }
 
