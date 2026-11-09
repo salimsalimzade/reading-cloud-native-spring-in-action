@@ -1,5 +1,5 @@
 bookshop:
-  greeting: Welcome to our book catalog from a production Kubernetes environment!
+  greeting: Welcome to our production book catalog sycnronized with ArgoCD!
 spring:
   config:
     # Loads every Secret mounted under /workspace/secrets/<name>/ as a config
