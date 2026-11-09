@@ -1,0 +1,25 @@
+# Book: patch-ingress.yml adds an nginx `server-snippet` that denies /actuator.
+# ingress-nginx v1.15 rejects snippet annotations by default (they were the
+# vector for several ingress-nginx CVEs), so instead this separate Ingress
+# claims the /actuator path prefix and denies every client address with the
+# standard (non-snippet) denylist annotation. nginx answers 403 at the edge.
+# In-cluster callers (kubelet probes, Prometheus) reach the pod directly and
+# are unaffected.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: bookshop-ingress-actuator
+  annotations:
+    nginx.ingress.kubernetes.io/denylist-source-range: "0.0.0.0/0,::/0"
+spec:
+  ingressClassName: nginx
+  rules:
+    - http:
+        paths:
+          - path: /actuator
+            pathType: Prefix
+            backend:
+              service:
+                name: edge-service
+                port:
+                  number: 80

@@ -1,0 +1,11 @@
+# In-cluster defaults for Edge Service (same pattern as catalog-service/k8s).
+spring:
+  data:
+    redis:
+      host: bookshop-redis
+  security:
+    oauth2:
+      client:
+        provider:
+          keycloak:
+            issuer-uri: http://bookshop-keycloak/realms/Bookshop

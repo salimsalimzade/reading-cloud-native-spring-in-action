@@ -49,3 +49,10 @@ spec:
               port: 9000
             initialDelaySeconds: 10
             periodSeconds: 10
+          volumeMounts:
+            - name: edge-config-volume
+              mountPath: /workspace/config
+      volumes:
+        - name: edge-config-volume
+          configMap:
+            name: edge-config

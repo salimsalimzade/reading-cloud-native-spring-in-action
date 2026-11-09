@@ -25,26 +25,44 @@ jobs:
       - name: Checkout source code
         uses: actions/checkout@v7
 
+      # Order and Dispatcher deliver releases before they have a production
+      # overlay; skip (with a notice) instead of failing the run.
+      - name: Check production overlay exists
+        id: overlay
+        run: |
+          if [ -f "$OVERLAY_DIR/kustomization.yml" ]; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::No production overlay at $OVERLAY_DIR yet; skipping $APP_NAME $APP_VERSION."
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Install kustomize
+        if: steps.overlay.outputs.exists == 'true'
         run: |
           curl -sSL https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv5.8.3/kustomize_v5.8.3_linux_amd64.tar.gz \
             | tar xz -C "$RUNNER_TEMP" kustomize
           echo "$RUNNER_TEMP" >> "$GITHUB_PATH"
 
       - name: Update image version
+        if: steps.overlay.outputs.exists == 'true'
         working-directory: ${{ env.OVERLAY_DIR }}
         run: |
+          # The version becomes part of a sed expression below; accept only a
+          # commit SHA so it can't inject sed syntax.
+          [[ "$APP_VERSION" =~ ^[0-9a-f]{40}$ ]] || { echo "::error::Invalid version: $APP_VERSION"; exit 1; }
           kustomize edit set image "$APP_NAME=$APP_IMAGE:$APP_VERSION"
-          # Pin the remote base (?ref=<sha>) to the same release commit.
-          # The book's `s/ref=[\w+]/.../` replaces only one character and drops
-          # "ref=", so match the whole hex SHA instead.
-          sed -i -E "s/(\?ref=)[0-9a-f]+/\1$APP_VERSION/" kustomization.yml
+          # Pin the remote base (?ref=...) to the same release commit. The
+          # book's `s/ref=[\w+]/.../` replaces only one character and drops
+          # "ref=", so replace the whole ref value (a SHA, or "main" initially).
+          sed -i -E "s/(\?ref=)[^[:space:]\"']+/\1$APP_VERSION/" kustomization.yml
           git diff --stat
 
       # Book uses stefanzweifel/git-auto-commit-action; plain git avoids handing
       # the token to a third-party action. A push made with GITHUB_TOKEN doesn't
       # trigger other workflows, so this can't start a pipeline loop.
       - name: Commit updated manifests
+        if: steps.overlay.outputs.exists == 'true'
         run: |
           if git diff --quiet; then
             echo "Overlay already at $APP_VERSION, nothing to commit."
