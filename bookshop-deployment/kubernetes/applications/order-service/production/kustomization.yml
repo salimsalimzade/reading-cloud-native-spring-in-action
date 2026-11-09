@@ -5,7 +5,7 @@ kind: Kustomization
   # Starts at `main` like the book's 15-end; the production stage pins it to the
   # release commit (and sets the image tag) on the next order-service release.
 resources:
-- github.com/salimsalimzade/reading-cloud-native-spring-in-action/order-service/k8s?ref=4ff4f0799e78098cf6a94d1ca6d854dbd3685244
+- github.com/salimsalimzade/reading-cloud-native-spring-in-action/order-service/k8s?ref=c92c4d37e2e44b7f08d7c1bd4d8da1101351a543
 
 # Book uses `patchesStrategicMerge`, which is deprecated in Kustomize v5.
 # `patches` with a `path` is the replacement and still does a strategic merge.
@@ -24,7 +24,7 @@ configMapGenerator:
 images:
 - name: order-service
   newName: ghcr.io/salimsalimzade/order-service
-  newTag: 4ff4f0799e78098cf6a94d1ca6d854dbd3685244
+  newTag: c92c4d37e2e44b7f08d7c1bd4d8da1101351a543
 
 replicas:
 - count: 1
