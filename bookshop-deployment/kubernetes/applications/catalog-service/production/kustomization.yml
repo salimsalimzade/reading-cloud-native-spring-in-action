@@ -6,7 +6,7 @@ kind: Kustomization
   # published ghcr.io/salimsalimzade/catalog-service:<sha>).
   # Monorepo, so the path goes through the repo name and then the service folder.
 resources:
-- github.com/salimsalimzade/reading-cloud-native-spring-in-action/catalog-service/k8s?ref=83c6c82c122d03c798bfb73c695891d24e1ea672
+- github.com/salimsalimzade/reading-cloud-native-spring-in-action/catalog-service/k8s?ref=c92c4d37e2e44b7f08d7c1bd4d8da1101351a543
 
 # Book uses `patchesStrategicMerge`, which is deprecated in Kustomize v5.
 # `patches` with a `path` is the replacement and still does a strategic merge.
@@ -25,7 +25,7 @@ configMapGenerator:
 images:
 - name: catalog-service
   newName: ghcr.io/salimsalimzade/catalog-service
-  newTag: 83c6c82c122d03c798bfb73c695891d24e1ea672
+  newTag: c92c4d37e2e44b7f08d7c1bd4d8da1101351a543
 
 # Two instances of Catalog Service in production (Listing 15.13).
 replicas:
