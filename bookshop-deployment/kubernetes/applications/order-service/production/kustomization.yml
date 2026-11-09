@@ -1,31 +1,31 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
-resources:
   # Remote base: order-service manifests (order-service/k8s) in this monorepo.
   # Starts at `main` like the book's 15-end; the production stage pins it to the
   # release commit (and sets the image tag) on the next order-service release.
-  - github.com/salimsalimzade/reading-cloud-native-spring-in-action/order-service/k8s?ref=main
+resources:
+- github.com/salimsalimzade/reading-cloud-native-spring-in-action/order-service/k8s?ref=4ff4f0799e78098cf6a94d1ca6d854dbd3685244
 
 # Book uses `patchesStrategicMerge`, which is deprecated in Kustomize v5.
 # `patches` with a `path` is the replacement and still does a strategic merge.
 patches:
-  - path: patch-env.yml
-  - path: patch-resources.yml
-  - path: patch-volumes.yml
+- path: patch-env.yml
+- path: patch-resources.yml
+- path: patch-volumes.yml
 
 # Adds application-prod.yml to the base's order-config ConfigMap.
 configMapGenerator:
-  - behavior: merge
-    files:
-      - application-prod.yml
-    name: order-config
+- behavior: merge
+  files:
+  - application-prod.yml
+  name: order-config
 
 images:
-  - name: order-service
-    newName: ghcr.io/salimsalimzade/order-service
-    newTag: latest
+- name: order-service
+  newName: ghcr.io/salimsalimzade/order-service
+  newTag: 4ff4f0799e78098cf6a94d1ca6d854dbd3685244
 
 replicas:
-  - count: 1
-    name: order-service
+- count: 1
+  name: order-service
